@@ -1,4 +1,5 @@
 // import 'dart:developer';
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -20,6 +21,10 @@ class _ExchangeGridItemState extends State<ExchangeGridItem> {
   void initState() {
     super.initState();
     _getExchanges();
+    const oneminute = Duration(minutes: 1);
+    Timer.periodic(oneminute, (timer) {
+      _getExchanges();
+    });
   }
 
   void _getExchanges() async {
@@ -33,8 +38,11 @@ class _ExchangeGridItemState extends State<ExchangeGridItem> {
           exch: item['exchange'],
           currency: item['currency'],
           buying: item['buying'],
+          buyDirection: item['buy_direction'],
           selling: item['selling'],
+          sellDirection: item['sell_direction'],
           description: item['description'],
+          updateTime: item['update_time'],
         ),
       );
     }
@@ -51,9 +59,10 @@ class _ExchangeGridItemState extends State<ExchangeGridItem> {
     if (_exchanges.isNotEmpty) {
       content = GridView.builder(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 5,
+          crossAxisCount: 7,
           childAspectRatio: 1.5,
         ),
+        
         itemCount: _exchanges.length,
         padding: const EdgeInsets.all(10),
         itemBuilder: (context, index) {
@@ -71,14 +80,21 @@ class _ExchangeGridItemState extends State<ExchangeGridItem> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         mainAxisSize: MainAxisSize.max,
                         children: [
-                          _exchanges[index].exch != 'BITKUB'? Text(_exchanges[index].description, style: const TextStyle(color: Colors.white, fontSize: 18,),) :
-                          Text(
-                            _exchanges[index].currency,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                            ),
-                          ),
+                          _exchanges[index].exch != 'BITKUB'
+                              ? Text(
+                                  _exchanges[index].description,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                  ),
+                                )
+                              : Text(
+                                  _exchanges[index].currency,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                  ),
+                                ),
                           const Spacer(),
                           Text(
                             _exchanges[index].exch,
@@ -92,52 +108,144 @@ class _ExchangeGridItemState extends State<ExchangeGridItem> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               _exchanges[index].exch == 'BITKUB' &&
-                                      double.parse(_exchanges[index].buying) >=
-                                          1000
+                                      _exchanges[index].buyDirection == 'UP'
                                   ? Row(
+                                    // crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.start,
                                       children: [
-                                        const Icon(Icons.arrow_upward),
-                                        Text(_exchanges[index].buying)
+                                        const Icon(
+                                          Icons.arrow_upward,
+                                          color: Colors.green,
+                                        ),
+                                        Text('${_exchanges[index].buying} THB')
                                       ],
                                     )
-                                  : _exchanges[index].exch == 'BBL bank'
+                                  : _exchanges[index].exch == 'BITKUB' &&
+                                          _exchanges[index].buyDirection ==
+                                              'DOWN'
                                       ? Row(
                                           children: [
-                                            const Icon(Icons.arrow_downward),
-                                            Text(_exchanges[index].buying)
+                                            const Icon(
+                                              Icons.arrow_downward,
+                                              color: Colors.red,
+                                            ),
+                                            Text(
+                                                '${_exchanges[index].buying} THB')
                                           ],
                                         )
-                                      : _exchanges[index].exch == 'SCB bank'
+                                      : _exchanges[index].exch == 'BBL' &&
+                                              _exchanges[index].buyDirection ==
+                                                  'UP'
                                           ? Row(
                                               children: [
                                                 const Icon(
-                                                    Icons.arrow_downward),
+                                                  Icons.arrow_upward,
+                                                  color: Colors.green,
+                                                ),
                                                 Text(_exchanges[index].buying)
                                               ],
                                             )
-                                          : Text(
-                                              _exchanges[index].buying,
-                                            ),
+                                          : _exchanges[index].exch == 'BBL'
+                                              ? Row(
+                                                  children: [
+                                                    const Icon(
+                                                      Icons.arrow_downward,
+                                                      color: Colors.red,
+                                                    ),
+                                                    Text(_exchanges[index]
+                                                        .buying)
+                                                  ],
+                                                )
+                                              : _exchanges[index].exch ==
+                                                          'SCB' &&
+                                                      _exchanges[index]
+                                                              .buyDirection ==
+                                                          'UP'
+                                                  ? Row(
+                                                      children: [
+                                                        const Icon(
+                                                          Icons.arrow_upward,
+                                                          color: Colors.green,
+                                                        ),
+                                                        Text(_exchanges[index]
+                                                            .buying)
+                                                      ],
+                                                    )
+                                              : _exchanges[index].exch ==
+                                                          'SCB' 
+                                                  ? Row(
+                                                      children: [
+                                                        const Icon(
+                                                          Icons.arrow_downward,
+                                                          color: Colors.red,
+                                                        ),
+                                                        Text(_exchanges[index]
+                                                            .buying)
+                                                      ],
+                                                    )
+                                                  : Text(
+                                                      _exchanges[index].buying,
+                                                    ),
                               const SizedBox(
-                                width: 10,
+                                width: 40,
                               ),
-                              _exchanges[index].exch == 'BBL bank'
+                              // const Spacer(),
+                              _exchanges[index].exch == 'BBL' &&
+                                      _exchanges[index].sellDirection == 'UP'
                                   ? Row(
                                       children: [
-                                        const Icon(Icons.arrow_downward),
+                                        const Icon(
+                                          Icons.arrow_upward,
+                                          color: Colors.green,
+                                        ),
                                         Text(_exchanges[index].selling)
                                       ],
                                     )
-                                  : _exchanges[index].exch == 'SCB bank'
+                                  : _exchanges[index].exch == 'BBL'
                                       ? Row(
                                           children: [
-                                            const Icon(Icons.arrow_downward),
+                                            const Icon(
+                                              Icons.arrow_downward,
+                                              color: Colors.red,
+                                            ),
                                             Text(_exchanges[index].selling)
                                           ],
                                         )
-                                      : Text(
-                                          _exchanges[index].selling,
-                                        ),
+                                      : _exchanges[index].exch == 'SCB' &&
+                                      _exchanges[index].sellDirection == 'UP'
+                                          ? Row(
+                                              children: [
+                                                const Icon(
+                                                  Icons.arrow_upward,
+                                                  color: Colors.green,
+                                                ),
+                                                Text(_exchanges[index].selling)
+                                              ],
+                                            )
+                                      : _exchanges[index].exch == 'SCB'
+                                          ? Row(
+                                              children: [
+                                                const Icon(
+                                                  Icons.arrow_downward,
+                                                  color: Colors.red,
+                                                ),
+                                                Text(_exchanges[index].selling)
+                                              ],
+                                            )
+                                          : Text(
+                                              _exchanges[index].selling,
+                                            ),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              Text(
+                                _exchanges[index].updateTime,
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 10,
+                                ),
+                              ),
                             ],
                           ),
                         ],
